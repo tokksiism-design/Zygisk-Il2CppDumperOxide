@@ -1,0 +1,38 @@
+name: Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      GamePackageName:
+        description: 'Game package name (например, com.oxide.game)'
+        required: true
+        default: ''
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up JDK
+      uses: actions/setup-java@v3
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+
+    - name: Update package name
+      run: |
+        FILE="module/src/main/cpp/game.h"
+        if [ -f "$FILE" ]; then
+          sed -i 's/GamePackageName = ".*"/GamePackageName = "${{ github.event.inputs.GamePackageName }}"/' $FILE
+        fi
+
+    - name: Build with Gradle
+      run: ./gradlew :module:assembleRelease
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: Zygisk-Il2CppDumper
+        path: out/
